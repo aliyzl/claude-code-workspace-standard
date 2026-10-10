@@ -53,6 +53,28 @@ proposes. Where the profile is silent, use the default below and confirm it the 
 | the owner's stock phrases and what each means (e.g. what "stop safely" requires) | ask once, then record |
 | network constraints and vantage points | measure them (§16, step 2) |
 
+### 0.2 Make it yours: a private personal layer
+
+This standard is generic on purpose. Personalise it by keeping your own choices in **a private repository of your
+own** (for example `workspace-private`), never by editing this file:
+
+```
+workspace-private/                 ← private; yours
+├── README.md                      how a new project uses it
+├── OWNER-PROFILE.md               §0.1 filled in: language, timezone, git identity, delegation, stock phrases, network
+├── memory-seeds/owner-profile.md  a memory note installed in every new project, so sessions follow the profile untold
+├── servers/                       machines you reuse across projects, and what any project may do there
+└── tools/                         personal tools you reuse across projects
+```
+
+Then keep **one local entry file**, outside both repositories, that you hand to an agent. It points to your profile
+first and to this standard second. The profile outranks the standard's defaults; the standard stays shareable; and a
+new project inherits your preferences through the memory seed.
+
+- **What does not belong there:** a project's own facts (they live in that project's workspace), and any project that
+  must stay unlinked from you, if the private repository sits under your real-name account.
+- **The template** is `OWNER-PROFILE.md` in §18.
+
 ---
 
 ## 1. What a workspace is, and what it is not
@@ -765,6 +787,47 @@ Run each item; do not assume it. Run commands from a script or by absolute path 
 Copy each template, then replace every `<…>` and delete the guidance comments. The
 [example workspace](example/acme-shop/workspace/README.md) shows them filled in.
 
+### `OWNER-PROFILE.md` (in your private layer, §0.2)
+
+````markdown
+# Owner profile
+
+**Kind:** register · **Owned by:** <you> · **Last checked:** <YYYY-MM-DD> · Fills §0.1 of the Workspace Standard and
+outranks its defaults. A later instruction from you outranks this file: update it.
+
+## Language
+| | rule |
+| --- | --- |
+| chat replies | <language; how to check it before sending> |
+| command and agent descriptions | <language> |
+| files | <language and register, e.g. professional English from the first draft> |
+| your own words in files | <paraphrased in the files' language / quoted verbatim> |
+| text that stays verbatim | <product text: UI labels, error messages, glossed terms> |
+
+## Time and place
+| | |
+| --- | --- |
+| timezone | <e.g. +0330> |
+| projects root | <path>; sessions start in the project root |
+
+## Git and GitHub
+| | |
+| --- | --- |
+| commit identity | <name> <email>, set per clone; checked before each commit |
+| AI trailers | <none / allowed> |
+| remotes | <private, under <account>, created only on your word> |
+| pseudonymous projects | <which account; never mentioned in this repository> |
+
+## Working with you
+- **Delegation:** <what "decide yourself" covers; what stays reserved: spending, deleting, production writes, deploys>
+- **When you are away:** <ask nothing; decide, record, continue>
+- **Stock phrases:** <phrase → what it means>
+- **Your machine:** <what needs your word before it is changed>
+
+## Network
+- <VPN, exit country, what refuses it; vantage points and their rules>
+````
+
 ### `.gitignore`
 
 ```gitignore
@@ -1180,3 +1243,4 @@ When a rule here turns out wrong, change it, add a dated line below, and record 
 | --- | --- |
 | 2026-10-11 | version 1 |
 | 2026-10-11 | version 2: after a full review of one long-running workspace (4,559 files) and its method pack, against v1. **Fixed:** the memory sync could overwrite newer memory and could empty the copy; the secret scan missed whole token families and printed nothing to prove it could fail; quoting the owner verbatim is now a profile setting, default paraphrase. **Added:** register budgets and kind headers; one place per present fact; retiring by move; standing facts; run arguments, liveness and stop records; queue counted from every source; working with the owner (never block, rulings under delegation); multi-session authority and shared-resource locks; topic, integration, deliverable and ledger folders; irreversible-operation runbooks; Claude settings as a secret store and `claude-setup/`; memory-lesson format; personal-data scans; sharing as a pack; `scan-secrets.sh` |
+| 2026-10-11 | §0.2: personalise through a private personal layer (profile, memory seed, shared servers, personal tools) and one local entry file, never by editing the standard; an `OWNER-PROFILE.md` template in §18 |

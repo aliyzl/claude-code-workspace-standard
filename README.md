@@ -16,6 +16,17 @@ Give your agent one line:
 The standard is self-contained. The agent needs nothing else, apart from your own preferences (language, timezone,
 commit identity), which it reads from your `CLAUDE.md` or memory, or asks you for (§0.1).
 
+## Make it yours
+
+The standard is generic and meant to be shared. Do not fork it to add your preferences. Keep them in **a private
+repository of your own** (for example `workspace-private`): an `OWNER-PROFILE.md` with your language, timezone, git
+identity, delegation rules and stock phrases; a memory note that every new project installs on day one; and any
+servers and tools you reuse across projects.
+
+Then keep **one local entry file** that points an agent to your profile first and to this standard second. The profile
+outranks the standard's defaults, and the standard stays clean for everyone else. §0.2 of the standard explains the
+layout, and §18 has the `OWNER-PROFILE.md` template.
+
 ## What is here
 
 | path | what it is |
