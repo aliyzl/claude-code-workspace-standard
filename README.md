@@ -26,16 +26,20 @@ commit identity), which it reads from your `CLAUDE.md` or memory, or asks you fo
 ## The ideas in one screen
 
 1. **Answer in a file, then summarise in chat.** A chat window is not memory.
-2. **Registers vs records.** A register says what is true now: undated, edited in place, and checked against
-   reality. A record says what happened: dated, and never rewritten.
+2. **Registers vs records.** A register says what is true now: undated, edited in place, checked against reality,
+   and short (an entry point that grew to 2,379 lines stopped being read). A record says what happened: dated, and
+   never rewritten.
 3. **Every number carries its date and the command that measured it.** "I could not check this" is an entry, not a
    silence.
 4. **Before you believe a number, ask which result would have been impossible.** A check that cannot fail proves
-   nothing.
+   nothing, and that applies to your own scans too.
 5. **Link, never copy**, anything a code repository owns.
-6. **Secrets never land in the workspace in plaintext.** Ask for access, not secrets. Git history is permanent.
-7. **Several sessions, one checkout:** commit with `git commit --only <paths>`. Shared memory directories get
-   appends, not rewrites.
+6. **Secrets never land in the workspace in plaintext.** Ask for access, not secrets. Scan by whole token
+   family, and print counts, never matches. Git history is permanent.
+7. **Never block on the owner.** Questions wait in a file. Decisions taken under delegation are recorded with their
+   reason and their cost to reverse.
+8. **Several sessions, one checkout:** commit with `git commit --only <paths>`. Permission does not travel between
+   sessions. Shared memory directories get appends, not rewrites.
 
 ```
 workspace/

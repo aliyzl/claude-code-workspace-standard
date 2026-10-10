@@ -1,11 +1,11 @@
 ---
 name: acme-shop-workspace
-description: Where Acme Shop's non-code facts live, and the order to read them in
+description: Everything about Acme Shop that is not code is in ~/projects/acme-shop/workspace; read RESUME-HERE.md first
 metadata:
   type: project
 ---
 
-Everything about Acme Shop that is not code is in `~/projects/acme-shop/workspace` (created 2026-10-01). Read `RESUME-HERE.md` first, then `NEEDS-A-PERSON.md` and `DEPLOYED-NOW.md`.
+On 2026-10-01 the owner asked for one place holding everything about the shop that is not code, so they would not have to explain the project again after a restart. It is `~/projects/acme-shop/workspace`. Read `RESUME-HERE.md` first; the README holds the full read order.
 
-**Why:** the owner asked not to have to explain the project again after a restart («که دفعه‌ی بعد مجبور نشم دوباره توضیح بدم»).
+**Why:** a chat window is not memory; the owner should never pay twice for the same explanation.
 **How to apply:** answer in a workspace file, then summarise in chat. After changing memory, run `tools/sync-claude-memory.sh to-workspace`. Related: [[health-checks-must-write]].

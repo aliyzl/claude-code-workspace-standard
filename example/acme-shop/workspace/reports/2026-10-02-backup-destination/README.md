@@ -1,6 +1,6 @@
 # Where should the off-site backups go?
 
-**Date:** 2026-10-02. **Status:** a report, not a decision; the decision is `NEEDS-A-PERSON.md` #1.
+**Kind:** report · **Date:** 2026-10-02 · A report, not a decision; the decision is `NEEDS-A-PERSON.md` #1.
 
 ## Question
 

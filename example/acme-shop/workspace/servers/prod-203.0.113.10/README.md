@@ -1,5 +1,8 @@
 # prod (203.0.113.10)
 
+**Kind:** server · **Last surveyed:** 2026-10-03 · ssh alias `prod` · If this disagrees with the machine, the machine is
+right: re-survey.
+
 **What it is:** a VPS in the owner's country, 4 vCPU, 8 GB RAM, 80 GB disk, Ubuntu 24.04. `ssh deploy@203.0.113.10`
 with `~/.ssh/id_ed25519`. Owned and paid for by the owner. Nothing else runs here.
 
@@ -19,5 +22,11 @@ with `~/.ssh/id_ed25519`. Owned and paid for by the owner. Nothing else runs her
 ## Known behaviour
 
 - **2026-10-03:** the disk filled with container logs at ~1.3 GB a day; log rotation is PR #31. Re-measure with
-  `ssh deploy@203.0.113.10 'df -h /'`.
+  `ssh prod 'df -h /'`.
 - **2026-10-01:** the payment gateway's sandbox answers `200` from here and refuses the laptop's VPN exit.
+
+## Change log
+
+| date | change | undo |
+| --- | --- | --- |
+| 2026-10-03 | truncated container JSON logs under `/var/lib/docker/containers` (12 GB), with the owner's word | none needed; logs only |

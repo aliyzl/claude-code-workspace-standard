@@ -1,20 +1,33 @@
 #!/bin/zsh
-# Usage: sync-claude-memory.sh to-workspace | to-claude
-#   to-workspace  copy the live Claude memory into claude-memory/ (run before a commit)
-#   to-claude     restore claude-memory/ into the live memory directory (on a new machine)
+# Usage: tools/sync-claude-memory.sh to-workspace | to-claude
+#   to-workspace  copy the live Claude memory (*.md only) into claude-memory/ (run before a commit)
+#   to-claude     restore claude-memory/ into the live memory folder (on a new machine, into an empty folder only)
+# The live folder is derived from the project root (this workspace's parent), the directory sessions start in.
+# If sessions start elsewhere, set CLAUDE_MEMORY_DIR. Verify the printed path with: ls ~/.claude/projects/
 set -eu
 HERE=${0:A:h:h}
-LIVE="$HOME/.claude/projects/-Users-you-projects-acme-shop/memory"     # verify with: ls ~/.claude/projects/
+ROOT=${HERE:h}
+LIVE=${CLAUDE_MEMORY_DIR:-$HOME/.claude/projects/${ROOT//[^A-Za-z0-9]/-}/memory}
 COPY="$HERE/claude-memory"
 case "${1:-}" in
   to-workspace)
-    # Memory must never hold a secret; refuse if anything key-shaped appears.
-    if grep -rIl -E '(^|[^A-Za-z0-9])(sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[0-9A-Z]{16})|BEGIN [A-Z ]*PRIVATE KEY|[0-9]{8,10}:[A-Za-z0-9_-]{35}|password[[:space:]]*[:=][[:space:]]*[^[:space:]]{6,}' "$LIVE" >/dev/null 2>&1; then
-      echo "refusing: something key-shaped is in the live memory" >&2; exit 1
+    if [[ ! -f $LIVE/MEMORY.md ]]; then
+      echo "refusing: no MEMORY.md in $LIVE; a sync from an empty or wrong folder would empty the copy" >&2; exit 1
     fi
-    rsync -a --delete --exclude 'README-THIS-IS-A-COPY.md' "$LIVE/" "$COPY/" ;;
+    if ! "$HERE/tools/scan-secrets.sh" "$LIVE" >/dev/null; then
+      echo "refusing: something key-shaped is in the live memory; run tools/scan-secrets.sh $LIVE" >&2; exit 1
+    fi
+    for f in $LIVE/*(N.:t); do
+      [[ $f == *.md ]] || { echo "skipped, not memory: $f" >&2; continue; }
+      [[ $f == MEMORY.md ]] || grep -qF "($f)" "$LIVE/MEMORY.md" || echo "note: $f is not indexed in MEMORY.md" >&2
+    done
+    mkdir -p "$COPY"
+    rsync -a --delete --exclude 'README-THIS-IS-A-COPY.md' --include '*.md' --exclude '*' "$LIVE/" "$COPY/" ;;
   to-claude)
+    if [[ -d $LIVE && -n $(ls -A "$LIVE") ]]; then
+      echo "refusing: $LIVE already has files; restoring would replace newer memory. Move them aside first." >&2; exit 1
+    fi
     mkdir -p "$LIVE"; rsync -a --exclude 'README-THIS-IS-A-COPY.md' "$COPY/" "$LIVE/" ;;
   *) echo "usage: $0 to-workspace | to-claude" >&2; exit 2 ;;
 esac
-echo "done: $1"
+echo "done: $1 ($LIVE)"
