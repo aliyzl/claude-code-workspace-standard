@@ -1,0 +1,2 @@
+- [Acme Shop workspace](acme-shop-workspace.md) — non-code home at ~/projects/acme-shop/workspace; start at RESUME-HERE.md
+- [Health checks must write](health-checks-must-write.md) — a check that only answers cannot see a full disk

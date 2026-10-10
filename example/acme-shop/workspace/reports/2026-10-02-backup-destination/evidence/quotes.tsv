@@ -1,0 +1,5 @@
+option	item	price	unit	source	read_on
+bucket	storage	0.006	USD per GB-month	https://storage.example.com/pricing	2026-10-02
+bucket	egress	0.01	USD per GB	https://storage.example.com/pricing	2026-10-02
+vps2	smallest plan with 80 GB disk	6.00	USD per month	https://cloud.example.net/pricing	2026-10-02
+nas	already owned	0	USD	owner	2026-10-02

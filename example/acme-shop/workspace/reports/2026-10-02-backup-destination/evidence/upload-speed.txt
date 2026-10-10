@@ -1,0 +1,14 @@
+# measure-upload.sh, run on prod (203.0.113.10), 2026-10-02 14:10-14:25 +0330
+# file: acme-2026-10-02T03-00.dump.gz, 398458880 bytes (sha256 9b1c...e04a)
+
+== bucket (s3-compatible, abroad)
+upload: 398458880 bytes in 41.2 s (9.2 MiB/s)
+head-object size check: 398458880 OK
+
+== vps2 (same provider, other region, 192.0.2.40)
+upload: 398458880 bytes in 18.4 s (20.6 MiB/s)
+remote sha256 check: OK
+
+== nas (owner's home, over the owner's VPN)
+upload: 398458880 bytes in 112.7 s (3.4 MiB/s)
+remote sha256 check: OK
