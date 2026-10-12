@@ -327,15 +327,6 @@ by the plugin's next update, and only a check catches that.*
 *One real file had 29 "Before that:" paragraphs above a table nobody updated, and gave two answers to "what is in
 production".*
 
-**Anything that acts while nobody watches** (it publishes, spends or sends messages on its own) answers four
-questions under `## When nobody is watching`, each with the date it was last tested:
-
-- what it does when the owner cannot be reached for a day, and for a week (degrade to a safe mode first, then pause);
-- how to stop it when the owner's usual channels are down (a second person, or a switch that does not depend on them);
-- where its backups go off the machine, and when a restore was last practised;
-- what watches it from outside. A monitor that reports through the system it watches goes silent with it, and silence
-  looks like health.
-
 ### `NEXT-WORK.md` (when the queue outgrows `RESUME-HERE.md`)
 
 **Count what remains from every source, not from what was touched recently.** The sources are:
@@ -700,15 +691,6 @@ When the project relies on more than the defaults, keep a scrubbed **copy** in `
   point, and ask". Reading it literally once cut a review's fix round, and its work was repeated.*
 - **The owner's machine is the owner's.** Editing a shell profile, global git config or `~/.claude` needs their word.
   Record the workaround per command in `THIS-MACHINE.md` instead.
-- **Before a phase gate** (a launch, the first spend, a change of direction), **run a blind-spot review.**
-  - Independent reviewers each take one lens: safety, identity and legal; operations and reliability; product and
-    business.
-  - Each writes its own file in `reports/<date>-blind-spots/`.
-  - A synthesis splits the findings into the owner's decisions and the agents' changes, and names the step each must
-    land before.
-
-  *Every build review in one project had passed. The blind-spot review still found that nothing measured whether the
-  product worked, and that nothing defined what the system did while the owner was unreachable.*
 
 ---
 
@@ -726,22 +708,6 @@ Some projects must not be linkable to the owner, for example a publication run u
   account may carry their real name. Do not create a remote or push until they are answered.
 - **Name every identity-linking step** the project forces (ID checks on payment platforms, card payments, phone
   numbers) as a decision for the owner, with the trade-off stated.
-- **Settle the threat model first:** who the anonymity is for (authorities, clients or employers, the public). It sets
-  how far everything below goes. Record it per project as a risk level, because a low-risk topic may not be worth the
-  cost.
-- **Commit metadata is identity.** Every clone carries the commit e-mails, the time-zone offset in every commit date,
-  and the real name a code host writes into merge commits.
-  - Never ship `.git` to the project's servers. Deploy a built artifact instead.
-  - Leave documentation and agent instruction files out of that artifact too, since they also name the owner.
-- **Give the project's servers their own SSH key,** and never add it to a personal code-host account. Code hosts
-  publish each account's public keys, and anyone can probe a server for the key it accepts.
-- **The account that creates a bot, a channel, a page or an ad account is the link.** Create the project's own account
-  first, give it a second administrator, and create everything from it. A transfer later leaves history.
-- **Map the identity chains in one table.** For each service account, list the e-mail or phone number it needs, its
-  payment route, and what each would reveal. Keep the table in the workspace and never publish it.
-- **An open project and a pseudonymous one built on the same engine are linkable by fingerprint.** Shared code, prose
-  style, posting times, visual assets, sources and servers all connect them. Separate them deliberately, or accept
-  the link knowingly.
 
 ---
 
@@ -831,8 +797,6 @@ Run each item; do not assume it. Run commands from a script or by absolute path 
       under delegation is in its table.
 - [ ] Before a stop or a machine move, check every related repository: nothing uncommitted, unpushed, stashed or
       only local. Every file that lives outside git is listed under **Resuming on another machine** with its backup.
-- [ ] For anything deployed that acts while nobody watches, `DEPLOYED-NOW.md` → **When nobody is watching** is filled
-      in, with test dates.
 
 ---
 
@@ -1059,17 +1023,6 @@ than a few days is re-measured before it is believed. If this disagrees with the
 
 | machine | what | version | since | measured with |
 | --- | --- | --- | --- | --- |
-
-## When nobody is watching
-
-<!-- Only for something that publishes, spends or sends messages on its own. -->
-
-| question | answer | last tested |
-| --- | --- | --- |
-| owner unreachable for a day, and for a week | | |
-| how to stop it when the owner's usual channels are down | | |
-| off-machine backups, and the last restore drill | | |
-| what watches it from outside | | |
 
 ## How to re-measure
 
@@ -1304,8 +1257,6 @@ sys.exit(1 if broken else 0)
 | paths with spaces, or names that differ only by case | scripts and links break on them |
 | create empty scaffolding folders "for later" | structure without content looks like information |
 | delete a source after extracting a record from it, without reading the record | an empty search result becomes an empty record, and the only copy is gone |
-| watch a system only through the system itself | when it fails, its alerts fail too, and silence looks like health |
-| ship `.git` to a server the owner must not be linked to | every commit carries an e-mail and a time zone, and hosted merges a real name |
 | leave a git-ignored run folder only on the laptop | when the machine goes, the run's rulings go with it |
 
 ---
@@ -1319,4 +1270,4 @@ When a rule here turns out wrong, change it, add a dated line below, and record 
 | 2026-10-11 | version 1 |
 | 2026-10-11 | version 2: after a full review of one long-running workspace (4,559 files) and its method pack, against v1. **Fixed:** the memory sync could overwrite newer memory and could empty the copy; the secret scan missed whole token families and printed nothing to prove it could fail; quoting the owner verbatim is now a profile setting, default paraphrase. **Added:** register budgets and kind headers; one place per present fact; retiring by move; standing facts; run arguments, liveness and stop records; queue counted from every source; working with the owner (never block, rulings under delegation); multi-session authority and shared-resource locks; topic, integration, deliverable and ledger folders; irreversible-operation runbooks; Claude settings as a secret store and `claude-setup/`; memory-lesson format; personal-data scans; sharing as a pack; `scan-secrets.sh` |
 | 2026-10-11 | §0.2: personalise through a private personal layer (profile, memory seed, shared servers, personal tools) and one local entry file, never by editing the standard; an `OWNER-PROFILE.md` template in §18 |
-| 2026-10-13 | version 2.1. **Added:** where a run writes, since a session can end at any moment; stop records that cover every related repository and the files outside git, and say whether resuming needs the owner; a planned machine move (**Resuming on another machine**); reading an extract before deleting its source; `DEPLOYED-NOW.md` → **When nobody is watching** for anything that acts unattended; blind-spot reviews at phase gates; for pseudonymous projects: the threat model first, commit metadata, a separate SSH key, the creating account, the identity-chain table and fingerprint linking; four anti-patterns |
+| 2026-10-13 | version 2.1. **Added:** where a run writes, because a session can end at any moment; stop records that cover every related repository and the files outside git, and say whether resuming needs the owner; a planned machine move (**Resuming on another machine**); reading an extract before deleting its source; two anti-patterns |
