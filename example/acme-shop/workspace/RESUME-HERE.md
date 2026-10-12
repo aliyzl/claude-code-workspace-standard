@@ -22,6 +22,12 @@ about 150 lines; adding a block means archiving an older one.
   [`reports/2026-10-02-backup-destination/`](reports/2026-10-02-backup-destination/README.md). It recommends an
   object-storage bucket abroad plus a weekly copy kept by the owner. The decision is `NEEDS-A-PERSON.md` #1.
 
+## Resuming on another machine
+
+1. Clone `<owner>/acme-shop` beside this workspace, then run `tools/sync-claude-memory.sh to-claude`.
+2. Lives outside git: the `prod` and `build` entries in `~/.ssh/config`. Re-create them from the server pages in
+   `servers/`, which name the user and port. The production `.env` stays on `prod` and is never copied.
+
 ## Next, in order
 
 1. **Owner decides the backup destination** (`NEEDS-A-PERSON.md` #1). The off-site copy then goes in as a pull
