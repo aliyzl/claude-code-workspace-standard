@@ -1,6 +1,6 @@
 # Workspace Standard
 
-**How to build, fill and keep a project workspace with Claude Code.** Version 2, 2026-10-11.
+**How to build, fill and keep a project workspace with Claude Code.** Version 2.1, 2026-10-13.
 
 This document is self-contained. An agent that reads it can set up and keep a workspace for a new project without
 seeing any other project. It was distilled from several long-running workspaces kept with Claude Code in 2026. They
@@ -113,7 +113,8 @@ project root.
 
 **When the code repository already is the project root:** put the workspace inside it as `workspace-<project>/`. Make
 it **its own git repository**, and hide it from the code repository with `.git/info/exclude`. That file is local and
-never committed, so the two histories cannot mix.
+never committed, so the two histories cannot mix. For the same reason a fresh clone does not have it: re-create it on
+every new machine (§5, **Resuming on another machine**; §9).
 
 **Never move a repository or the project root to make room.** Repository paths appear in memory files, shell history
 and tool configuration. Claude's memory folder is named after the directory sessions start in, so moving it silently
@@ -280,7 +281,8 @@ block. It says what to clone and where, which toolchain to install, and to run `
 to-claude`. It names the local entry file (§0.2) and every file that matters and lives outside git, each with its
 backup or the source to re-create it from. Secrets are never copied; the block says where each one is re-created.
 Before the old machine is switched off, git-ignored folders worth keeping are copied into the workspace. A run's
-ledger kept inside a code repository is the usual example.
+ledger kept inside a code repository is the usual example. The block also lists every ignore rule that lives only on
+the old machine (`.git/info/exclude`, a global excludes file), because a fresh clone has none of them (§9).
 
 ### `NEEDS-A-PERSON.md`
 
@@ -573,6 +575,13 @@ before the first commit.
   `tools/scan-secrets.sh .`.
 - **Moves are renames** (`git mv`), and relative links are fixed in the same commit, so `git log --follow` survives.
 - **A rewritten history gets an old → new hash map as a record.** Records citing old hashes are not edited.
+- **An ignore rule that lives on one machine does not travel.** `.git/info/exclude`, a global `core.excludesfile`,
+  and a self-ignoring `.gitignore` that a tool writes inside its own folder are all absent from a fresh clone. A
+  folder restored there by hand from a backup comes back unguarded. So every folder a tool writes run state into
+  inside a repository (agent ledgers, review packages, a local server's session files) gets its line in that
+  repository's **committed** `.gitignore`. *After a machine move, a run ledger that had been "git-ignored" was due to
+  be re-created by hand from its backup. Its only guard was a `.gitignore` its tool wrote inside the ledger folder,
+  and a sibling tool folder that holds a session key had no guard at all.*
 
 ---
 
@@ -797,6 +806,8 @@ Run each item; do not assume it. Run commands from a script or by absolute path 
       under delegation is in its table.
 - [ ] Before a stop or a machine move, check every related repository: nothing uncommitted, unpushed, stashed or
       only local. Every file that lives outside git is listed under **Resuming on another machine** with its backup.
+- [ ] After cloning on a new machine, `git status --short --ignored` in every related repository shows each tool's
+      run folder and any nested workspace as ignored (`!!`), not untracked (`??`).
 
 ---
 
@@ -1258,6 +1269,7 @@ sys.exit(1 if broken else 0)
 | create empty scaffolding folders "for later" | structure without content looks like information |
 | delete a source after extracting a record from it, without reading the record | an empty search result becomes an empty record, and the only copy is gone |
 | leave a git-ignored run folder only on the laptop | when the machine goes, the run's rulings go with it |
+| keep a tool's run folder out of git only through `.git/info/exclude` or the tool's own self-ignoring `.gitignore` | neither survives a clone, and the folder restored by hand is unguarded |
 
 ---
 
@@ -1271,3 +1283,4 @@ When a rule here turns out wrong, change it, add a dated line below, and record 
 | 2026-10-11 | version 2: after a full review of one long-running workspace (4,559 files) and its method pack, against v1. **Fixed:** the memory sync could overwrite newer memory and could empty the copy; the secret scan missed whole token families and printed nothing to prove it could fail; quoting the owner verbatim is now a profile setting, default paraphrase. **Added:** register budgets and kind headers; one place per present fact; retiring by move; standing facts; run arguments, liveness and stop records; queue counted from every source; working with the owner (never block, rulings under delegation); multi-session authority and shared-resource locks; topic, integration, deliverable and ledger folders; irreversible-operation runbooks; Claude settings as a secret store and `claude-setup/`; memory-lesson format; personal-data scans; sharing as a pack; `scan-secrets.sh` |
 | 2026-10-11 | §0.2: personalise through a private personal layer (profile, memory seed, shared servers, personal tools) and one local entry file, never by editing the standard; an `OWNER-PROFILE.md` template in §18 |
 | 2026-10-13 | version 2.1. **Added:** where a run writes, because a session can end at any moment; stop records that cover every related repository and the files outside git, and say whether resuming needs the owner; a planned machine move (**Resuming on another machine**); reading an extract before deleting its source; two anti-patterns |
+| 2026-10-13 | §2, §5, §9, §17, §19: an ignore rule that lives on one machine (`.git/info/exclude`, a global excludes file, a tool's self-ignoring `.gitignore`) does not travel with a clone. Tool run folders inside a repository are ignored in its committed `.gitignore`; the machine-move block lists the local-only rules; a checklist item proves it after a clone. Found in a review after a machine move |
