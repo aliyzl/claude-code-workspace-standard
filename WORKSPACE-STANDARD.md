@@ -1284,9 +1284,10 @@ reads (§11), change it only between runs, and keep its ledgers where a reboot o
 - **Our plans carried the tests written out, each with a named mutation** ("invert X → this test goes red"), and
   left implementation bodies optional and non-binding. *A body pasted from a plan, passing tests written by the same
   hand, had turned the red step into theatre.*
-- **Implementers proved each mutation red, reverted it, and checked that the diff was empty.** *A mutation can itself
-  be a no-op: a formatter had split a line, the removal matched nothing, and the test stayed green until the mutation
-  was redone.*
+- **Implementers proved each mutation red, reverted it, and checked that the diff was empty.** A mutation is code,
+  and it can be wrong exactly as a test can; the only thing that catches either is watching the colour change.
+  *Twice a mutation was a no-op: once a formatter had split a line so the removal matched nothing, once the
+  mutated expression still evaluated to the original value. Both tests stayed green until the mutation was redone.*
 - **A slice worked best as one change a person could use:** the back end and its surface together, the last task
   being a person doing the job on that surface. *An API merged without its screen, and the screen slipped; elsewhere a
   column was stored and shown, and read by no code.*
