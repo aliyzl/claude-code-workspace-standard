@@ -521,6 +521,15 @@ And it is the one decision a diff review structurally cannot make. *Four indepen
 one such branch, found ten real defects between them and raised none of this, because every one of them had been
 pointed at the diff.* A reviewer answers the question it was given.
 
+**Asking for "an architecture review" is not enough, and that is the sharper version of the same finding.** *In the
+same case one reviewer WAS asked to attack the tenancy design. It did careful work — it corrected the cost model
+from processes to memory and upgrades, and produced the formula for tenants per machine — and it never asked whether
+the engine was right, although it had itself reported the engine's contention to that session the same day. The
+question it was handed was "is one database per business right?", when the question was "what should the database
+be?".* **A reviewer cannot ask a question nobody put in front of it**, which is why this gate names the engine, the
+framework and the deployment shape separately, and why it is a list of questions rather than an instruction to
+review.
+
 Five questions, answered in writing, before the first commit:
 
 1. **What class of failure does this choice make possible?** Not "what will go wrong" — what *can*.
