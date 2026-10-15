@@ -1261,7 +1261,92 @@ sys.exit(1 if broken else 0)
 
 ---
 
-## 20. Changelog
+## 20. Delivering code: a method that held up
+
+This standard governs the workspace, and a repository's own method wins for its code. This section is a hint, not a
+rule. It holds the delivery method that two long-running repositories converged on, reviewed by the three sessions
+that ran it, each line with the failure behind it. Take what fits. The workspace's part is narrow:
+- the method lives in one file that binds every session (§11);
+- it changes only between runs;
+- its ledgers live where a reboot or a removed worktree cannot take them (§6).
+
+**Knowing before deciding**
+- **A consequence is read in the code, never recalled.** *A warning that a change would notify 22 people was wrong:
+  the recorded decision said that case raises nothing.*
+- **Measure the real system before writing a ruling about it.** *A ruling that a server kept its own configuration
+  file was disproved by one checksum.*
+- **Times in records come from the clock (`date`), never from an estimate.** *Three estimated times had to be
+  corrected in one night.*
+
+**Plans**
+- **Tests are written out in the plan, each with a named mutation** ("invert X → this test goes red").
+  Implementation bodies are optional and non-binding. *A body pasted from a plan, passing tests written by the same
+  hand, turns the red step into theatre.*
+- **The implementer proves every mutation red, reverts it, and checks that the diff is empty.** *A mutation can
+  itself be a no-op. A formatter had split a line, so the removal matched nothing, and the test stayed green until
+  the mutation was redone.*
+- **One slice is one change a person can use:** the back end and its surface together, and the last task is a
+  person doing the job on that surface. *An API merged without its screen, and the screen slipped. Elsewhere a column
+  was stored and shown, and read by no code.*
+
+**Reviews**
+- **One implementer and one reviewer per task, then a whole-change review before anything reaches the main
+  branch.** *The whole-change review found nine product defects that every task review had passed.*
+- **Reviewers judge by reading:** is the diff the plan, would each test fail for the right reason, and what important
+  behaviour is not tested at all. They do not re-run suites or re-prove mutations. *Re-proving cost hours in one run.*
+- **Two fix rounds per task, then a written ruling.** *A one-line lockfile task cost about 950,000 tokens in five
+  fix rounds and two adjudications. Two rounds and a ruling reach the same answer for about 400,000 less.*
+- **Risk follows what a change touches,** not its size: money, access, a migration, or a contract between two
+  systems gets the heavy review, whatever its task count.
+
+**Branches**
+- **Task changes merge into an integration or feature branch.** The whole-change review runs there, and one merge
+  reaches the main branch, which stays releasable at every moment. *A writer merged before its reader was verified
+  left the main branch unreleasable for days.*
+- **A flaw found late is fixed forward** in its own small change, with a test that names it, rather than by reverting
+  later work built on it.
+- **A defect found off-scope gets its own change at once.**
+
+**Running**
+- **Every test command and every long job gets a wall-clock cap.** *A runner that finished and never exited held a
+  shared machine's lock for two days.*
+- **Wait for CI with a script on the run id;** spend no tokens waiting.
+- **Every agent brief says that chat relayed from the owner belongs to the orchestrator.** *A relayed "where were
+  we?" made an implementer answer instead of build.*
+- **Small changes are made by hand.** *A six-task change cost 1.7 million tokens and about 85 minutes through the
+  full pipeline; a change of about 100 lines took about 45 minutes by hand, with one peer review.*
+- **Build cheap, judge dear:** build at a lower effort and review at a higher one.
+- **How many runs go at once is a level the owner sets.** One project used one, two or three. A level changes how many
+  runs go at once, never how carefully each one is built.
+
+**Releasing**
+- **Release exactly what CI tested:** the merge commit's tree hash equals the tree of the head CI passed, and the
+  release builds from that fixed commit. The main branch need not freeze while it runs.
+- **Gates and proofs are written from the last release's record, not from memory.** *A gate written from memory
+  stopped a release on a gap that was absent on purpose.*
+- **Every release has:**
+  - a restore point and a rollback;
+  - a swap in a measured quiet window (no user action for the last N minutes);
+  - a read of what production actually serves, from a version endpoint, before and after;
+  - a proof that the new thing is reachable: a call naming a new field must fail on authorisation, not on
+    validation, and a control call must fail;
+  - the **old** request sent as well, which must still answer, so that a cached client keeps working;
+  - a light, independent cross-test by another session.
+- **A producer is switched on only after its consumer is live,** behind a switch: off, release the reader, one dry-run
+  probe, then on. Between a server and its clients the same rule means the server ships first, or both together.
+  *A new screen asking for a new required field would have broken against the old server; an installed web app
+  keeps old code for days.*
+
+**Hands off what is not yours, and nothing secret on screen**
+- **When automating someone else's interface or tool, verify the target's identity before every write, and stop at
+  the first mismatch.** *Rows were opened by stale coordinates in another system's interface.*
+- **Never print anything that can carry a credential,** such as a URL from a request made with credentials, or a
+  file. *A probe printed a password through a redirect URL, and it had to be rotated at once.*
+- **A file that will hold personal data is git-ignored before it is written** (§8).
+
+---
+
+## 21. Changelog
 
 When a rule here turns out wrong, change it, add a dated line below, and record the incident that changed it.
 
@@ -1271,3 +1356,4 @@ When a rule here turns out wrong, change it, add a dated line below, and record 
 | 2026-10-11 | version 2: after a full review of one long-running workspace (4,559 files) and its method pack, against v1. **Fixed:** the memory sync could overwrite newer memory and could empty the copy; the secret scan missed whole token families and printed nothing to prove it could fail; quoting the owner verbatim is now a profile setting, default paraphrase. **Added:** register budgets and kind headers; one place per present fact; retiring by move; standing facts; run arguments, liveness and stop records; queue counted from every source; working with the owner (never block, rulings under delegation); multi-session authority and shared-resource locks; topic, integration, deliverable and ledger folders; irreversible-operation runbooks; Claude settings as a secret store and `claude-setup/`; memory-lesson format; personal-data scans; sharing as a pack; `scan-secrets.sh` |
 | 2026-10-11 | §0.2: personalise through a private personal layer (profile, memory seed, shared servers, personal tools) and one local entry file, never by editing the standard; an `OWNER-PROFILE.md` template in §18 |
 | 2026-10-13 | version 2.1. **Added:** where a run writes, because a session can end at any moment; stop records that cover every related repository and the files outside git, and say whether resuming needs the owner; a planned machine move (**Resuming on another machine**); reading an extract before deleting its source; two anti-patterns |
+| 2026-10-15 | §20 added: delivering code, a hint drawn from two repositories' method, reviewed by the three sessions that ran it; the changelog moves to §21 |
