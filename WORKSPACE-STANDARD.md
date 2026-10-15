@@ -1261,7 +1261,97 @@ sys.exit(1 if broken else 0)
 
 ---
 
-## 20. Changelog
+## 20. Delivering code: what held up, as suggestions
+
+**Nothing in this section is a rule.** The rest of this standard governs the workspace; how a project delivers its
+code is the project's own choice, and its repository's method wins. What follows is experience: what two
+long-running repositories tried, what held up, and the failure that taught each point. It was reviewed by the three
+sessions that ran it. Read it as suggestions, take what fits your project, and leave the rest.
+
+If you do adopt a method, three things about it belong to the workspace: keep it in one file that every session
+reads (§11), change it only between runs, and keep its ledgers where a reboot or a removed worktree cannot take them
+(§6).
+
+**Knowing before deciding**
+- **We came to read a consequence in the code rather than recall it.** *A warning that a change would notify 22
+  people was wrong: the recorded decision said that case raises nothing.*
+- **Measuring the real system before ruling about it paid off.** *A ruling that a server kept its own configuration
+  file was disproved by one checksum.*
+- **Times in records worked best taken from the clock (`date`).** *Three estimated times had to be corrected in one
+  night.*
+
+**Plans**
+- **Our plans carried the tests written out, each with a named mutation** ("invert X → this test goes red"), and
+  left implementation bodies optional and non-binding. *A body pasted from a plan, passing tests written by the same
+  hand, had turned the red step into theatre.*
+- **Implementers proved each mutation red, reverted it, and checked that the diff was empty.** A mutation is code,
+  and it can be wrong exactly as a test can; the only thing that catches either is watching the colour change.
+  *Twice a mutation was a no-op: once a formatter had split a line so the removal matched nothing, once the
+  mutated expression still evaluated to the original value. Both tests stayed green until the mutation was redone.*
+- **A slice worked best as one change a person could use:** the back end and its surface together, the last task
+  being a person doing the job on that surface. *An API merged without its screen, and the screen slipped; elsewhere a
+  column was stored and shown, and read by no code.*
+
+**Reviews**
+- **One implementer and one reviewer per task, then a whole-change review before the main branch.** *The whole-change
+  review found nine product defects that every task review had passed.*
+- **Reviewers who judged by reading were enough:** is the diff the plan, would each test fail for the right reason,
+  what important behaviour is untested. Re-running suites and re-proving mutations added little. *Re-proving cost
+  hours in one run.*
+- **Two fix rounds per task, then a written ruling, was the cap we settled on.** *A one-line lockfile task cost about
+  950,000 tokens in five fix rounds and two adjudications; two rounds and a ruling reach the same answer for about
+  400,000 less.*
+- **We sized review by what a change touched,** not by its size: money, access, a migration, or a contract between
+  two systems got the heavy review.
+
+**Branches**
+- **Merging task changes into an integration or feature branch,** reviewing the whole there, and merging once to the
+  main branch kept the main branch releasable. *A writer merged before its reader was verified had left the main
+  branch unreleasable for days.*
+- **A flaw found late was cheaper to fix forward** in its own small change, with a test that names it, than to revert
+  later work built on it.
+- **A defect found off-scope went into its own change at once.**
+
+**Running**
+- **A wall-clock cap on every test command and long job saved us more than once.** *A runner that finished and never
+  exited held a shared machine's lock for two days.*
+- **Waiting for CI with a script on the run id** spent no tokens on waiting.
+- **Agent briefs said that chat relayed from the owner belongs to the orchestrator.** *A relayed "where were we?" had
+  made an implementer answer instead of build.*
+- **Small changes were cheaper by hand.** *A six-task change cost 1.7 million tokens and about 85 minutes through the
+  full pipeline; a change of about 100 lines took about 45 minutes by hand, with one peer review.*
+- **Building at a lower effort and reviewing at a higher one** kept cost down without lowering the bar.
+- **How many runs go at once was a level the owner set;** one project used one, two or three. The level changed how
+  many runs went at once, never how carefully each one was built.
+
+**Releasing**
+- **We released exactly what CI tested:** the merge commit's tree matched the tree CI passed, and the release built
+  from that fixed commit, so the main branch did not need to freeze.
+- **Gates written from the last release's record held better than gates written from memory.** *A gate written from
+  memory stopped a release on a gap that was absent on purpose.*
+- **A release that held up had:**
+  - a restore point and a rollback;
+  - a swap in a measured quiet window (no user action for the last few minutes);
+  - a read of what production served, from a version endpoint, before and after;
+  - a proof that the new thing was reachable: a call naming a new field failed on authorisation, not on validation,
+    beside a control call that had to fail;
+  - the **old** request sent as well, still answered, so that a cached client kept working;
+  - a light, independent cross-test by another session.
+- **A producer was switched on only after its consumer was live,** behind a switch: off, release the reader, one
+  dry-run probe, then on. Between a server and its clients this meant the server shipped first, or both together.
+  *A new screen asking for a new required field would have broken against the old server; an installed web app keeps
+  old code for days.*
+
+**Hands off what is not yours, and nothing secret on screen**
+- **Automating someone else's interface went safely only when the target's identity was checked before every write,
+  stopping at the first mismatch.** *Rows were opened by stale coordinates in another system's interface.*
+- **Nothing that can carry a credential was printed,** such as a URL from a request made with credentials, or a file.
+  *A probe printed a password through a redirect URL, and it had to be rotated at once.*
+- **A file that would hold personal data was git-ignored before it was written** (§8).
+
+---
+
+## 21. Changelog
 
 When a rule here turns out wrong, change it, add a dated line below, and record the incident that changed it.
 
@@ -1271,3 +1361,4 @@ When a rule here turns out wrong, change it, add a dated line below, and record 
 | 2026-10-11 | version 2: after a full review of one long-running workspace (4,559 files) and its method pack, against v1. **Fixed:** the memory sync could overwrite newer memory and could empty the copy; the secret scan missed whole token families and printed nothing to prove it could fail; quoting the owner verbatim is now a profile setting, default paraphrase. **Added:** register budgets and kind headers; one place per present fact; retiring by move; standing facts; run arguments, liveness and stop records; queue counted from every source; working with the owner (never block, rulings under delegation); multi-session authority and shared-resource locks; topic, integration, deliverable and ledger folders; irreversible-operation runbooks; Claude settings as a secret store and `claude-setup/`; memory-lesson format; personal-data scans; sharing as a pack; `scan-secrets.sh` |
 | 2026-10-11 | §0.2: personalise through a private personal layer (profile, memory seed, shared servers, personal tools) and one local entry file, never by editing the standard; an `OWNER-PROFILE.md` template in §18 |
 | 2026-10-13 | version 2.1. **Added:** where a run writes, because a session can end at any moment; stop records that cover every related repository and the files outside git, and say whether resuming needs the owner; a planned machine move (**Resuming on another machine**); reading an extract before deleting its source; two anti-patterns |
+| 2026-10-15 | §20 added: delivering code, as suggestions from two repositories' experience, not rules; reviewed by the three sessions that ran it. The changelog moves to §21 |
