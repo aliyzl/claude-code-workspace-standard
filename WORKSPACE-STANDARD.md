@@ -24,6 +24,10 @@ A complete worked example lives in [`example/acme-shop/workspace/`](example/acme
 3. Follow the procedure in [§16](#16-bootstrap-procedure).
 4. Ask the owner only what you cannot find yourself, and never in a way that blocks (§12).
 5. Write everything into files first. Summarise in chat afterwards.
+6. **If the project has code to be built or chosen for, run the foundation review in §7 before its first commit.**
+   The architecture, the stack, the database and the deployment shape are reviewed once, in writing, and that is
+   the only cheap time. It is step 6 rather than a rule buried in §7 because it has a deadline the other rules do
+   not: after the first commit it stops being a review and becomes a migration.
 
 Where this standard and a project's own repository disagree, **the repository wins** for anything about its code.
 This standard governs only the workspace.
@@ -490,6 +494,52 @@ A runbook for a production data change, a DNS change or a money operation:
 15. **A move is finished when nothing that instructs a session still names the old path.** Grep the live memory,
     every `CLAUDE.md`, skills, agent briefs and scripts, and fix each link's visible text as well as its target. *A
     folder dissolved on one day had 28 new entries two weeks later, because a memory note still sent sessions there.*
+16. **A diagnosis that is right for a repair can be the wrong frame for a design.** A repair answers *what caused
+    this incident*; a new system answers *what makes this class of incident possible at all*. The second question
+    is the one that belongs in a design, and answering the first well does not answer it. *A session correctly
+    traced a database's crashes to one code pattern, fixed it, and hours later chose the same database engine for a
+    new system with several times the concurrent write load — because "the bug is the pattern, not the engine" was
+    true of the fix and false of the choice.*
+17. **Separate the property you need from the first mechanism that delivers it.** Name the property, then list every
+    mechanism that has it, then choose. *A design needed tenant isolation — one customer must not be able to read
+    another's rows even through a forgotten `WHERE` — and reached for one file per tenant in an embedded database.
+    A separate database per tenant in the server engine has the identical property without that engine's
+    single-writer limit. The requirement never implied the mechanism, and nothing in the review noticed, because
+    the two had been written down as one decision.*
+
+### The foundation is reviewed once, and that is the only cheap time
+
+Rules 16 and 17 are about one decision, so it gets its own gate. **Before the first commit of any new system, write
+down the architecture, the stack, the database and the deployment shape — and review *those* as adversarially as a
+diff.**
+
+A diff review is cheap and repeatable; it can be run every day for a year. **A foundation review is cheap exactly
+once.** The asymmetry is the whole argument: two slices in, a database change is two files and the migration deletes
+code. A year in, it is the most expensive migration there is, and nobody will authorise it.
+
+And it is the one decision a diff review structurally cannot make. *Four independent fresh-context reviewers read
+one such branch, found ten real defects between them and raised none of this, because every one of them had been
+pointed at the diff.* A reviewer answers the question it was given.
+
+Five questions, answered in writing, before the first commit:
+
+1. **What class of failure does this choice make possible?** Not "what will go wrong" — what *can*.
+2. **Has that failure already happened to us?** Search the records. An incident the team has lived through is the
+   strongest evidence available and the easiest to leave in the past tense.
+3. **What do the systems this one must talk to already use?** Two engines for two products that exchange data costs
+   operations, backup practice and tooling twice.
+4. **Does the workload match the predecessor's?** Port the lessons; do not assume the stack travels with them. *An
+   architecture whose contention had just been measured under two writers was carried, unchanged, to a system with
+   five.*
+5. **What am I hand-rolling that another choice gives me in one line?** Write it down the second time you reach for
+   it. *Three attempts at reproducing one of another engine's primitives were read as three bugs, when they were one
+   wrong premise.*
+
+Two more signals that the foundation, not the code, is the thing to re-examine:
+
+- **Resilience added against a failure is an admission that the failure recurs.** When something is hardened so it
+  can survive X, ask whether the next thing built should be able to experience X at all.
+- **A reviewer rejecting the same mechanism twice is evidence about the premise**, not about the implementation.
 
 ---
 

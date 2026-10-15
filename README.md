@@ -51,6 +51,9 @@ layout, and §18 has the `OWNER-PROFILE.md` template.
    reason and their cost to reverse.
 8. **Several sessions, one checkout:** commit with `git commit --only <paths>`. Permission does not travel between
    sessions. Shared memory directories get appends, not rewrites.
+9. **The foundation gets its own review, before the first commit.** The architecture, the stack, the database and
+   the deployment shape are the one decision a diff review structurally cannot make — and the only one that is
+   cheap exactly once. A diagnosis that is right for a repair is often the wrong frame for a design.
 
 ```
 workspace/
