@@ -1,0 +1,28 @@
+# What must never reach a remote, and why.
+# Git history is permanent: a file committed once stays in every clone even after it is deleted.
+# So the guard has to be here, before the first commit, rather than in anybody's habits.
+
+# 1 · Credentials and anything shaped like a key.
+secrets/
+*.zip
+*.pem
+*.key
+*.p12
+*.ovpn
+*.session
+*.session-journal
+id_ed25519*
+id_rsa*
+.env
+.env.*
+*.dump
+*.sql
+*.sql.gz
+*.gpg
+!vault.tar.gz.gpg
+
+# 2 · Output, not input. Safe to delete at any time.
+scratch/
+
+# 3 · macOS
+.DS_Store
