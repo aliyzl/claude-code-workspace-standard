@@ -51,6 +51,10 @@ layout, and §18 has the `OWNER-PROFILE.md` template.
    reason and their cost to reverse.
 8. **Several sessions, one checkout:** commit with `git commit --only <paths>`. Permission does not travel between
    sessions. Shared memory directories get appends, not rewrites.
+9. **The laptop's SSD is a consumable.** AI-driven development can write terabytes a day; one laptop wrote 1.77 TB in
+   a single day. Databases, container stacks, full test suites and large installs run on a development server. That
+   is enforced on the machine by a user-level warning, a hook and a write-rate alarm, not left to a project's memory
+   (§10).
 
 ```
 workspace/

@@ -64,7 +64,7 @@ workspace-private/                 ← private; yours
 ├── OWNER-PROFILE.md               §0.1 filled in: language, timezone, git identity, delegation, stock phrases, network
 ├── memory-seeds/owner-profile.md  a memory note installed in every new project, so sessions follow the profile untold
 ├── servers/                       machines you reuse across projects, and what any project may do there
-└── tools/                         personal tools you reuse across projects
+└── tools/                         personal tools you reuse across projects (the disk guard of §10, for one)
 ```
 
 Then keep **one local entry file**, outside both repositories, that you hand to an agent. It points to your profile
@@ -638,6 +638,51 @@ When the project relies on more than the defaults, keep a scrubbed **copy** in `
 - **`restore.sh`** refuses to overwrite an existing file.
 - **Never carried:** transcripts, plugin caches, and other projects' memory. Memory has its own copy.
 
+### The laptop's disk is a consumable
+
+**This is an important warning for every project.** AI-driven development writes to the local disk far more than a
+person typing does. Agents reinstall dependencies, start databases for test suites, rebuild container images, rerun
+whole suites, and leave things running when a session ends.
+
+- **What that cost:** one laptop with a soldered SSD wrote **1.77 TB in a single day**. A test database a session left
+  running wrote **about 760 GB in one night**.
+- **Why it matters:** a soldered SSD cannot be replaced without replacing the logic board, so its write budget is the
+  laptop's lifetime.
+
+**Heavy work runs on a development server, never on the laptop:**
+- anything that starts a database server, and every test suite that needs one;
+- container stacks and image builds;
+- full or repeated test runs: e2e suites, mutation testing, watch mode, retry loops;
+- large installs and downloads.
+
+The laptop keeps editing, git, linters and type-checks, and one test file at a time. **A run that truly must be
+local** runs one at a time, puts any database on a RAM disk, and stops as soon as it has answered. **A long or
+unattended run never starts on the laptop.**
+
+**A rule in a project's memory is not enough.** A new project, or a session in another project, starts without it.
+Enforce the rule on the machine itself, in three layers, each silent unless needed:
+
+| layer | where | what it does | cost |
+| --- | --- | --- | --- |
+| a warning | the user-level `~/.claude/CLAUDE.md`, between markers so an installer can update it | every session in every project reads what runs on the server, and how | a few hundred tokens once per session, cached |
+| a guard | a `PreToolUse` hook on `Bash` | **refuses** a database server whose data is on the internal disk; **notes** other heavy commands once per session; never judges commands sent to another machine (`ssh`, `rsync`, a remote Docker context), nor text inside quotes or heredocs | nothing, unless it speaks |
+| an alarm | a user-level background job that reads the disk's write counter every minute | on a sustained high rate it alerts the owner and sets a **brake** file, which the guard honours: heavy commands are refused in every session, and each session is told what is writing | nothing |
+
+- **Calibrate the alarm on the machine's own measured log,** not a guess. Replay the candidate rule over the log, and
+  check that ordinary heavy days stay quiet while the runaway days fire. Then write the numbers beside the tool. A
+  rule of "this much in 10 minutes **and** this much in an hour" kept one machine's alarm to a single warning on
+  ordinary heavy days, where a 10-minute rule alone fired on most days.
+- **The guard must never fail closed.** It always exits 0, and a crash prints nothing. It is a seatbelt, not a jail:
+  a refusal is a signal to move the work or ask the owner, never an obstacle to route around.
+- **Escape hatches are explicit.** A data directory on a RAM disk passes. One run the owner approved in the chat may
+  carry a marker that the guard accepts, and the marker stays visible in the transcript.
+- **Test it like code.** Keep a table of commands with the decision each must get, and prove the table can fail.
+  Install in a sandbox home first. Then trigger the hook once in a live session, both a refusal and a note, before
+  calling it live.
+- **Keep it in your private layer (§0.2).** That is where the server's name, its address and how to reach it belong,
+  with an installer that is idempotent and backs up `settings.json`. Every machine you work on runs that installer.
+  Each workspace records the install in `THIS-MACHINE.md` → **Changes we made here**, with the check command.
+
 ---
 
 ## 11. Several sessions, several projects
@@ -756,7 +801,9 @@ Follow these steps in order. Steps 1–3 are read-only.
    - existing material scattered elsewhere: chat, session scratchpads, `~/.claude/plans/`, worktrees, other
      workspaces, old folders.
 2. **Measure the machine** for `THIS-MACHINE.md`: OS version, toolchain versions, the network's exit point
-   (`curl -s https://ipinfo.io/json`), and the relevant paths and keys (names only). Record the time.
+   (`curl -s https://ipinfo.io/json`), and the relevant paths and keys (names only). Record the time. Add the SSD's
+   lifetime writes (`smartctl -a disk0`, *Data Units Written*) and whether the disk guard (§10) is installed. Record
+   which development server the project's heavy work will run on.
 3. **Find the memory directory** (`ls ~/.claude/projects/`) and read its `MEMORY.md`.
 4. **Create the minimal layout** (§3), writing **`.gitignore` first** (§18).
 5. **Move material in; don't leave it scattered.**
@@ -791,6 +838,8 @@ Run each item; do not assume it. Run commands from a script or by absolute path 
       date inside `RESUME-HERE.md` equals its "last checked".
 - [ ] No live document links to a retired file. Grep the retired file's name.
 - [ ] Every tool runs from its new location (one real invocation each).
+- [ ] The machine's disk guard (§10) is installed and live: its check passes. If it is not, `THIS-MACHINE.md` says
+      so, and says why.
 - [ ] `tools/sync-claude-memory.sh to-workspace` prints `done` with the path it used, and that path exists under
       `~/.claude/projects/`.
 - [ ] Every open question from the session is in `NEEDS-A-PERSON.md`, numbered, with a reason. Every decision taken
@@ -1258,6 +1307,8 @@ sys.exit(1 if broken else 0)
 | create empty scaffolding folders "for later" | structure without content looks like information |
 | delete a source after extracting a record from it, without reading the record | an empty search result becomes an empty record, and the only copy is gone |
 | leave a git-ignored run folder only on the laptop | when the machine goes, the run's rulings go with it |
+| run a database-backed suite, a container stack or a test loop on the laptop "just this once" | a soldered SSD cannot be replaced; one test database left running wrote about 760 GB in a night |
+| keep a machine-wide warning only in one project's memory | other projects and new sessions never see it; a user-level `CLAUDE.md` plus a hook reaches every session |
 
 ---
 
@@ -1271,3 +1322,4 @@ When a rule here turns out wrong, change it, add a dated line below, and record 
 | 2026-10-11 | version 2: after a full review of one long-running workspace (4,559 files) and its method pack, against v1. **Fixed:** the memory sync could overwrite newer memory and could empty the copy; the secret scan missed whole token families and printed nothing to prove it could fail; quoting the owner verbatim is now a profile setting, default paraphrase. **Added:** register budgets and kind headers; one place per present fact; retiring by move; standing facts; run arguments, liveness and stop records; queue counted from every source; working with the owner (never block, rulings under delegation); multi-session authority and shared-resource locks; topic, integration, deliverable and ledger folders; irreversible-operation runbooks; Claude settings as a secret store and `claude-setup/`; memory-lesson format; personal-data scans; sharing as a pack; `scan-secrets.sh` |
 | 2026-10-11 | §0.2: personalise through a private personal layer (profile, memory seed, shared servers, personal tools) and one local entry file, never by editing the standard; an `OWNER-PROFILE.md` template in §18 |
 | 2026-10-13 | version 2.1. **Added:** where a run writes, because a session can end at any moment; stop records that cover every related repository and the files outside git, and say whether resuming needs the owner; a planned machine move (**Resuming on another machine**); reading an extract before deleting its source; two anti-patterns |
+| 2026-10-20 | §10 **The laptop's disk is a consumable**: heavy work runs on a development server. It is enforced on the machine by a user-level `CLAUDE.md` warning, a `PreToolUse` guard and a write-rate alarm whose brake reaches every session; the alarm is calibrated on the machine's own log. §16 step 2 measures the SSD's writes, §17 checks the guard, and §19 gains two anti-patterns. After a laptop wrote 1.77 TB in a day and a test database left running wrote about 760 GB in a night |
