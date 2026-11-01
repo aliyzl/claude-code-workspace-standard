@@ -683,6 +683,52 @@ Enforce the rule on the machine itself, in three layers, each silent unless need
   with an installer that is idempotent and backs up `settings.json`. Every machine you work on runs that installer.
   Each workspace records the install in `THIS-MACHINE.md` → **Changes we made here**, with the check command.
 
+### Subagents run on the cheaper model unless the role judges
+
+A subagent that names no model **inherits the main session's model**, which is usually the most capable and most
+expensive one. Many dispatches name none: a quick lookup, a preflight, a check written in a hurry.
+
+- **What that cost:** on one account, general-purpose subagents were **27%** of all usage. In the week measured, about
+  **two thirds** of that came from dispatches that named no model.
+
+**Measure before you change anything.**
+- Each subagent leaves a transcript under `~/.claude/projects/<project>/<session>/subagents/`, beside a `.meta.json`.
+  The `.meta.json` gives the agent's type, whether it is built in, and the model it asked for, if any.
+- Sum the assistant `usage` per transcript, split by type, by the model that ran, and by whether a model was named.
+- That split says which lever matters: the default, or the roles that name the expensive model on purpose.
+
+**Set the default once per machine.** A built-in type such as `general-purpose` has no agent file to edit. The setting
+is the lever:
+
+```json
+{ "env": { "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet" } }
+```
+
+- Put it in the user-level `~/.claude/settings.json`, so it reaches every project. Merge it into the existing `env`;
+  never replace the object.
+- A dispatch that names a model still gets that model.
+- Only sessions started after the change pick it up.
+- **Do not force it.** `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` overrides even an explicit model, so it weakens exactly the
+  reads you want strong.
+- Workflow agents follow their own variable, `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL`. A workflow script that names a
+  model on every call is unaffected by either variable.
+
+**Name the strong model where judgement decides.**
+- **The strong model** goes to:
+  - a whole-change review before a merge or a release;
+  - a late fix round, and an adjudication between reviewers;
+  - a contract or architecture-decision review;
+  - a deploy, restore or rollback script review;
+  - an analysis of production data before a write.
+- **The default** takes building, per-task reviews, lookups and preflights.
+- **The cheapest model** can take mechanical work: ledger lines, waiting on CI.
+
+**Agree it before you switch it.** Every session that dispatches subagents must name its judging roles explicitly
+*before* the default changes. Otherwise a review that used to inherit the strong model silently gets the weaker one.
+
+**Record it** in `THIS-MACHINE.md` → **Changes we made here**, with the backup of `settings.json`. Add the step to your
+private layer's new-machine list (§0.2).
+
 ---
 
 ## 11. Several sessions, several projects
@@ -840,6 +886,8 @@ Run each item; do not assume it. Run commands from a script or by absolute path 
 - [ ] Every tool runs from its new location (one real invocation each).
 - [ ] The machine's disk guard (§10) is installed and live: its check passes. If it is not, `THIS-MACHINE.md` says
       so, and says why.
+- [ ] `~/.claude/settings.json` sets a default subagent model (§10), and the judging roles name the strong model.
+      If it does not, `THIS-MACHINE.md` says why.
 - [ ] `tools/sync-claude-memory.sh to-workspace` prints `done` with the path it used, and that path exists under
       `~/.claude/projects/`.
 - [ ] Every open question from the session is in `NEEDS-A-PERSON.md`, numbered, with a reason. Every decision taken
