@@ -683,6 +683,82 @@ Enforce the rule on the machine itself, in three layers, each silent unless need
   with an installer that is idempotent and backs up `settings.json`. Every machine you work on runs that installer.
   Each workspace records the install in `THIS-MACHINE.md` → **Changes we made here**, with the check command.
 
+### Subagents run on the cheaper model unless the role judges
+
+A subagent that names no model **inherits the main session's model**, which is usually the most capable and most
+expensive one. Many dispatches name none: a quick lookup, a preflight, a check written in a hurry.
+
+- **What that cost:** on one account, general-purpose subagents were **27%** of all usage. In the week measured, about
+  **two thirds** of that came from dispatches that named no model.
+
+**Measure before you change anything.**
+- Each subagent leaves a transcript under `~/.claude/projects/<project>/<session>/subagents/`, beside a `.meta.json`.
+  The `.meta.json` gives the agent's type, whether it is built in, and the model it asked for, if any.
+- Sum the assistant `usage` per transcript, split by type, by the model that ran, and by whether a model was named.
+- That split says which lever matters: the default, or the roles that name the expensive model on purpose.
+
+**Set the default once per machine.** A built-in type such as `general-purpose` has no agent file to edit. The setting
+is the lever:
+
+```json
+{ "env": { "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet" } }
+```
+
+- Put it in the user-level `~/.claude/settings.json`, so it reaches every project. Merge it into the existing `env`;
+  never replace the object.
+- A dispatch that names a model still gets that model.
+- Only sessions started after the change pick it up.
+- **Do not force it.** `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` overrides even an explicit model, so it weakens exactly the
+  reads you want strong.
+- Workflow agents follow their own variable, `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL`. A workflow script that names a
+  model on every call is unaffected by either variable.
+
+**Name the strong model where judgement decides.**
+- **The strong model** goes to:
+  - a whole-change review before a merge or a release;
+  - a late fix round, and an adjudication between reviewers;
+  - a contract or architecture-decision review;
+  - a deploy, restore or rollback script review;
+  - an analysis of production data before a write.
+- **The default** takes building, per-task reviews, lookups and preflights.
+- **The cheapest model** can take mechanical work: ledger lines, waiting on CI.
+
+**Agree it before you switch it.** Every session that dispatches subagents must name its judging roles explicitly
+*before* the default changes. Otherwise a review that used to inherit the strong model silently gets the weaker one.
+
+**Record it** in `THIS-MACHINE.md` → **Changes we made here**, with the backup of `settings.json`. Add the step to your
+private layer's new-machine list (§0.2).
+
+### An agent's cost is its turns × its context
+
+Every step an agent takes re-sends its whole conversation. An agent starts at roughly **40–50k tokens** of fixed
+context: the system prompt, the tools, the instruction files and the skill list. It then only grows, with every
+log, diff and file it reads. So **a long agent costs far more than two short ones**, whatever its model.
+
+- **What that cost:** on one account, two tasks of a build cost about **100M** cache-read tokens.
+  - One implementer ran **115 turns** at a mean context of **234k**.
+  - Across another session's 754 subagent transcripts, agents over **80 turns** held **76%** of the cache reads.
+  - One agent killed by a network reset lost about **24M**, because none of its work was committed yet.
+- **The model was not the lever there.** The cheaper default was already set. Going lower would have weakened the
+  agents that write the riskiest code.
+
+**What to do:**
+- **Short outputs.** A test, lint or check writes its whole output to a log file. The agent prints only the tail, or
+  the lines around the first failure, and cites the file as evidence. It never prints a whole log, and it reads a
+  large diff in ranges.
+- **Batch.** One command that runs several checks beats several commands. Prove a task's named mutations in one
+  batch run, with one red/green line per mutation, after the green implementation is committed.
+- **Save as you go.** Commit and push after each green step, and keep the report current. A crash then loses one
+  step, not the task. A run cut short by the network proves nothing: repeat it.
+- **Cap an agent's life.** After about 60 tool calls, an implementer hands off, and only when the tree is clean, the
+  tests are green and the work is pushed. It writes a «Handoff» section (done, next, the mutations proved so far)
+  to its report, and a fresh agent continues from it, starting again at the fixed context. The review still covers
+  everything from the first agent's base.
+- **Trim the fixed context.** Turn off plugins no session uses. Each one's skill descriptions ride along in every
+  step of every agent. Measure first: search the transcripts for the plugin's skills before you remove it.
+- **Orchestrators too.** A long main session re-reads its own context every turn. Hand off early, and wait on
+  notifications instead of polling.
+
 ---
 
 ## 11. Several sessions, several projects
@@ -840,6 +916,8 @@ Run each item; do not assume it. Run commands from a script or by absolute path 
 - [ ] Every tool runs from its new location (one real invocation each).
 - [ ] The machine's disk guard (§10) is installed and live: its check passes. If it is not, `THIS-MACHINE.md` says
       so, and says why.
+- [ ] `~/.claude/settings.json` sets a default subagent model (§10), and the judging roles name the strong model.
+      If it does not, `THIS-MACHINE.md` says why.
 - [ ] `tools/sync-claude-memory.sh to-workspace` prints `done` with the path it used, and that path exists under
       `~/.claude/projects/`.
 - [ ] Every open question from the session is in `NEEDS-A-PERSON.md`, numbered, with a reason. Every decision taken

@@ -55,6 +55,9 @@ layout, and §18 has the `OWNER-PROFILE.md` template.
    a single day. Databases, container stacks, full test suites and large installs run on a development server. That
    is enforced on the machine by a user-level warning, a hook and a write-rate alarm, not left to a project's memory
    (§10).
+10. **A subagent that names no model inherits the most expensive one.** Set a cheaper default once per machine
+    (`CLAUDE_CODE_SUBAGENT_MODEL`), and let only the judging roles name the strong model. Measure the transcripts
+    first, and agree the judging roles before the switch (§10).
 
 ```
 workspace/
