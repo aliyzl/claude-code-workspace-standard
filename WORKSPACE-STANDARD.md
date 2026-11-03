@@ -729,6 +729,36 @@ is the lever:
 **Record it** in `THIS-MACHINE.md` → **Changes we made here**, with the backup of `settings.json`. Add the step to your
 private layer's new-machine list (§0.2).
 
+### An agent's cost is its turns × its context
+
+Every step an agent takes re-sends its whole conversation. An agent starts at roughly **40–50k tokens** of fixed
+context: the system prompt, the tools, the instruction files and the skill list. It then only grows, with every
+log, diff and file it reads. So **a long agent costs far more than two short ones**, whatever its model.
+
+- **What that cost:** on one account, two tasks of a build cost about **100M** cache-read tokens.
+  - One implementer ran **115 turns** at a mean context of **234k**.
+  - Across another session's 754 subagent transcripts, agents over **80 turns** held **76%** of the cache reads.
+  - One agent killed by a network reset lost about **24M**, because none of its work was committed yet.
+- **The model was not the lever there.** The cheaper default was already set. Going lower would have weakened the
+  agents that write the riskiest code.
+
+**What to do:**
+- **Short outputs.** A test, lint or check writes its whole output to a log file. The agent prints only the tail, or
+  the lines around the first failure, and cites the file as evidence. It never prints a whole log, and it reads a
+  large diff in ranges.
+- **Batch.** One command that runs several checks beats several commands. Prove a task's named mutations in one
+  batch run, with one red/green line per mutation, after the green implementation is committed.
+- **Save as you go.** Commit and push after each green step, and keep the report current. A crash then loses one
+  step, not the task. A run cut short by the network proves nothing: repeat it.
+- **Cap an agent's life.** After about 60 tool calls, an implementer hands off, and only when the tree is clean, the
+  tests are green and the work is pushed. It writes a «Handoff» section (done, next, the mutations proved so far)
+  to its report, and a fresh agent continues from it, starting again at the fixed context. The review still covers
+  everything from the first agent's base.
+- **Trim the fixed context.** Turn off plugins no session uses. Each one's skill descriptions ride along in every
+  step of every agent. Measure first: search the transcripts for the plugin's skills before you remove it.
+- **Orchestrators too.** A long main session re-reads its own context every turn. Hand off early, and wait on
+  notifications instead of polling.
+
 ---
 
 ## 11. Several sessions, several projects
