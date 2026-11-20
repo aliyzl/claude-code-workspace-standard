@@ -6,7 +6,7 @@
 # tools/personal-data.patterns, one extended regex per line; blank lines and # comments are ignored.
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
-KEYS='(^|[^A-Za-z0-9])(sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|xox[abprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35})|BEGIN [A-Z ]*PRIVATE KEY|[0-9]{8,10}:[A-Za-z0-9_-]{35}|sshpass[[:space:]]+-p|password[[:space:]]*[:=][[:space:]]*[^[:space:]]{6,}'
+KEYS='(^|[^A-Za-z0-9])(sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|xox[abprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35})|BEGIN [A-Z ]*PRIVATE KEY|[0-9]{8,10}:[A-Za-z0-9_-]{35}|sshpass[[:space:]]+-p|password[[:space:]]*[:=][[:space:]]*[^[:space:]]{6,}|SSHPAS[S]=.?[A-Za-z0-9!@#%^&*_+~-]|[A-Za-z0-9_.-]+:[^[:space:]|]{4,}[[:space:]]*\|[[:space:]]*(sudo[[:space:]]+)?chpass[w]d|echo[[:space:]]+[^|]+\|[[:space:]]*sudo[[:space:]]+-S'
 EXTRA=$(mktemp); trap 'rm -rf "$EXTRA" ${T:+"$T"}' EXIT
 grep -vE '^[[:space:]]*(#|$)' "$HERE/personal-data.patterns" > "$EXTRA" 2>/dev/null || true
 
@@ -29,7 +29,7 @@ scan() {
 if [ "${1:-}" = "--self-test" ]; then
   T=$(mktemp -d)
   # The fakes are assembled at run time, so this script never matches its own scan.
-  s=sk; g=gh; x=xo; a=AK; z=AI; b=BEG; p=pass; t='123456789:'
+  s=sk; g=gh; x=xo; a=AK; z=AI; b=BEG; p=pass; t='123456789:'; h=SS; w=w; o=o
   printf '%s\n' "KEY=${s}-proj-AbCdEfGhIjKlMnOpQrStUvWx123" > "$T/1"
   printf '%s\n' "${g}o_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789" > "$T/2"
   printf '%s\n' "${x}xb-1234567890-abcdefghijkl" > "$T/3"
@@ -39,13 +39,16 @@ if [ "${1:-}" = "--self-test" ]; then
   printf '%s\n' "${t}AAEhBP0av28dAAAAAAAAAAAAAAAAAAAAAAA" > "$T/7"
   printf '%s\n' "ssh${p} -p hunter22x ssh root@host" > "$T/8"
   printf '%s\n' "db ${p}word = hunter22x" > "$T/9"
-  printf '%s\n' "checkout-slow-disk-full; the task-runner; gh_pages; ask-me" > "$T/clean"
+  printf '%s\n' "SSHPA${h}=hunter22x sshpass -e ssh root@host" > "$T/10"
+  printf '%s\n' "echo 'deploy:hunter22x' | sudo chpass${w}d" > "$T/11"
+  printf '%s\n' "echo 'hunter22x' | sud${o} -S true" > "$T/12"
+  printf '%s\n' "checkout-slow-disk-full; the task-runner; gh_pages; ask-me" 'SSHPASS="$PW" sshpass -e ssh root@host' > "$T/clean"
   out=$(scan "$T"); ok=1
-  for i in 1 2 3 4 5 6 7 8 9; do
+  for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
     printf '%s\n' "$out" | grep -q "/$i: " || { echo "self-test: fake $i was NOT caught" >&2; ok=0; }
   done
   if printf '%s\n' "$out" | grep -q '/clean: '; then echo "self-test: a clean file was flagged" >&2; ok=0; fi
-  [ "$ok" -eq 1 ] && { echo "self-test: 9/9 fakes caught, clean file passed"; exit 0; }
+  [ "$ok" -eq 1 ] && { echo "self-test: 12/12 fakes caught, clean file passed"; exit 0; }
   exit 1
 fi
 

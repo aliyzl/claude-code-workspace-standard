@@ -523,6 +523,10 @@ before the first commit.
   `gho_` reported a live token as clean.* Keep the patterns tight too: a bare `sk-` matches "disk-full", and a scan
   that always fires gets ignored.
 - **Prove the scan can fail** (`tools/scan-secrets.sh --self-test`) before trusting a clean result.
+- **Enforce it mechanically, not in prose.** A written rule did not stop a plaintext ssh/sudo password reaching a pushed file
+  through an "allow always" list, so a script must refuse it without a model choosing to: the `.githooks/pre-commit` hook
+  (`git config core.hooksPath .githooks`, once per clone) and the `scan-secrets` CI job (§18). A credential found
+  after the fact is rotated, not only deleted, because history keeps it.
 
 **When a secret leaks**
 - **A secret that reached a transcript is rotated, not redacted.** A live session's transcript must not be edited,
@@ -813,7 +817,7 @@ Follow these steps in order. Steps 1–3 are read-only.
    - Link to old project folders rather than copying them.
 6. **Write the registers** from the facts measured in steps 1–5, each with its kind header (§4).
 7. **Write a record** for the day the workspace was created.
-8. **Install the tools** (§18). Run `tools/scan-secrets.sh --self-test`. Update the memory (one lesson per file, and a
+8. **Install the tools** (§18) and the hook: `git config core.hooksPath .githooks`. Run `tools/scan-secrets.sh --self-test`. Update the memory (one lesson per file, and a
    pointer in `MEMORY.md`) so future sessions know the workspace exists. Then run
    `tools/sync-claude-memory.sh to-workspace`.
 9. **Verify** everything in §17.
@@ -832,6 +836,7 @@ Run each item; do not assume it. Run commands from a script or by absolute path 
       it once on a sample with a known broken link.
 - [ ] `tools/scan-secrets.sh --self-test` passes, then `tools/scan-secrets.sh .` reports nothing. Read any hits under
       `evidence/` by eye: third-party pages can match.
+- [ ] `git config core.hooksPath` prints `.githooks`, and a commit that stages a planted fake key is refused. Remove the fake after.
 - [ ] If the workspace is a git repository, `git status --ignored` shows that nothing under `secrets/` and no `.env`,
       key, dump or `.ovpn` file is tracked or staged.
 - [ ] Every register has its kind header and is within budget: `wc -l RESUME-HERE.md` under about 150. The newest
@@ -1189,7 +1194,7 @@ echo "done: $1 ($LIVE)"
 # tools/personal-data.patterns, one extended regex per line; blank lines and # comments are ignored.
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
-KEYS='(^|[^A-Za-z0-9])(sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|xox[abprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35})|BEGIN [A-Z ]*PRIVATE KEY|[0-9]{8,10}:[A-Za-z0-9_-]{35}|sshpass[[:space:]]+-p|password[[:space:]]*[:=][[:space:]]*[^[:space:]]{6,}'
+KEYS='(^|[^A-Za-z0-9])(sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|xox[abprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35})|BEGIN [A-Z ]*PRIVATE KEY|[0-9]{8,10}:[A-Za-z0-9_-]{35}|sshpass[[:space:]]+-p|password[[:space:]]*[:=][[:space:]]*[^[:space:]]{6,}|SSHPAS[S]=.?[A-Za-z0-9!@#%^&*_+~-]|[A-Za-z0-9_.-]+:[^[:space:]|]{4,}[[:space:]]*\|[[:space:]]*(sudo[[:space:]]+)?chpass[w]d|echo[[:space:]]+[^|]+\|[[:space:]]*sudo[[:space:]]+-S'
 EXTRA=$(mktemp); trap 'rm -rf "$EXTRA" ${T:+"$T"}' EXIT
 grep -vE '^[[:space:]]*(#|$)' "$HERE/personal-data.patterns" > "$EXTRA" 2>/dev/null || true
 
@@ -1212,7 +1217,7 @@ scan() {
 if [ "${1:-}" = "--self-test" ]; then
   T=$(mktemp -d)
   # The fakes are assembled at run time, so this script never matches its own scan.
-  s=sk; g=gh; x=xo; a=AK; z=AI; b=BEG; p=pass; t='123456789:'
+  s=sk; g=gh; x=xo; a=AK; z=AI; b=BEG; p=pass; t='123456789:'; h=SS; w=w; o=o
   printf '%s\n' "KEY=${s}-proj-AbCdEfGhIjKlMnOpQrStUvWx123" > "$T/1"
   printf '%s\n' "${g}o_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789" > "$T/2"
   printf '%s\n' "${x}xb-1234567890-abcdefghijkl" > "$T/3"
@@ -1222,13 +1227,16 @@ if [ "${1:-}" = "--self-test" ]; then
   printf '%s\n' "${t}AAEhBP0av28dAAAAAAAAAAAAAAAAAAAAAAA" > "$T/7"
   printf '%s\n' "ssh${p} -p hunter22x ssh root@host" > "$T/8"
   printf '%s\n' "db ${p}word = hunter22x" > "$T/9"
-  printf '%s\n' "checkout-slow-disk-full; the task-runner; gh_pages; ask-me" > "$T/clean"
+  printf '%s\n' "SSHPA${h}=hunter22x sshpass -e ssh root@host" > "$T/10"
+  printf '%s\n' "echo 'deploy:hunter22x' | sudo chpass${w}d" > "$T/11"
+  printf '%s\n' "echo 'hunter22x' | sud${o} -S true" > "$T/12"
+  printf '%s\n' "checkout-slow-disk-full; the task-runner; gh_pages; ask-me" 'SSHPASS="$PW" sshpass -e ssh root@host' > "$T/clean"
   out=$(scan "$T"); ok=1
-  for i in 1 2 3 4 5 6 7 8 9; do
+  for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
     printf '%s\n' "$out" | grep -q "/$i: " || { echo "self-test: fake $i was NOT caught" >&2; ok=0; }
   done
   if printf '%s\n' "$out" | grep -q '/clean: '; then echo "self-test: a clean file was flagged" >&2; ok=0; fi
-  [ "$ok" -eq 1 ] && { echo "self-test: 9/9 fakes caught, clean file passed"; exit 0; }
+  [ "$ok" -eq 1 ] && { echo "self-test: 12/12 fakes caught, clean file passed"; exit 0; }
   exit 1
 fi
 
@@ -1237,6 +1245,45 @@ for p in "$@"; do  # a scan of a path that does not exist must fail, not report 
   [ -e "$p" ] || { echo "no such path: $p" >&2; exit 2; }
 done
 scan "$@"
+```
+
+### `.githooks/pre-commit`
+
+The scan above does nothing until something runs it. This hook runs it on every commit, with no model deciding to.
+Install once per clone: `git config core.hooksPath .githooks` (the setting lives in `.git/config`, so `git clone` does not copy it).
+
+```bash
+#!/bin/bash
+# Refuses a commit that stages something key-shaped. Install once per clone (the setting is not copied by git clone):
+#   git config core.hooksPath .githooks
+# It runs tools/scan-secrets.sh on the staged files and prints counts, never the matching text.
+set -u
+root=$(git rev-parse --show-toplevel) || exit 1
+files=()
+while IFS= read -r -d '' f; do files+=("$root/$f"); done < <(git diff --cached --name-only --diff-filter=ACM -z)
+[ "${#files[@]}" -gt 0 ] || exit 0
+if ! "$root/tools/scan-secrets.sh" "${files[@]}"; then
+  echo "commit refused: a staged file holds something key-shaped (counts above). Remove the value, rotate the credential." >&2
+  exit 1
+fi
+```
+
+### `.github/workflows/scan-secrets.yml`
+
+The same scan where nobody can skip it. Never answer a red with `git commit --no-verify`.
+
+```yaml
+# The same scan as the pre-commit hook, run where nobody can skip it. Read the job's own result, not the run's colour.
+name: scan-secrets
+on: [push, pull_request]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: tools/scan-secrets.sh --self-test
+      - run: tools/scan-secrets.sh .
 ```
 
 ### `tools/check-links.py`
@@ -1308,6 +1355,7 @@ sys.exit(1 if broken else 0)
 | delete a source after extracting a record from it, without reading the record | an empty search result becomes an empty record, and the only copy is gone |
 | leave a git-ignored run folder only on the laptop | when the machine goes, the run's rulings go with it |
 | run a database-backed suite, a container stack or a test loop on the laptop "just this once" | a soldered SSD cannot be replaced; one test database left running wrote about 760 GB in a night |
+| rely on a written rule to keep a credential out of git | the rule existed, and an "allow always" list wrote a password into a pushed file anyway; a hook and a CI job refuse it, a sentence does not |
 | keep a machine-wide warning only in one project's memory | other projects and new sessions never see it; a user-level `CLAUDE.md` plus a hook reaches every session |
 
 ---
@@ -1323,3 +1371,4 @@ When a rule here turns out wrong, change it, add a dated line below, and record 
 | 2026-10-11 | §0.2: personalise through a private personal layer (profile, memory seed, shared servers, personal tools) and one local entry file, never by editing the standard; an `OWNER-PROFILE.md` template in §18 |
 | 2026-10-13 | version 2.1. **Added:** where a run writes, because a session can end at any moment; stop records that cover every related repository and the files outside git, and say whether resuming needs the owner; a planned machine move (**Resuming on another machine**); reading an extract before deleting its source; two anti-patterns |
 | 2026-10-20 | §10 **The laptop's disk is a consumable**: heavy work runs on a development server. It is enforced on the machine by a user-level `CLAUDE.md` warning, a `PreToolUse` guard and a write-rate alarm whose brake reaches every session; the alarm is calibrated on the machine's own log. §16 step 2 measures the SSD's writes, §17 checks the guard, and §19 gains two anti-patterns. After a laptop wrote 1.77 TB in a day and a test database left running wrote about 760 GB in a night |
+| 2026-11-20 | §8 **Enforce it mechanically**: a plaintext ssh/sudo password reached a pushed file through an "allow always" list although the prose rule existed. §18 gains `.githooks/pre-commit` and `.github/workflows/scan-secrets.yml`; `scan-secrets.sh` also matches `SSHPASS=`, an echoed `chpasswd` password and an echoed `sudo -S` password, with 12 self-test fakes; §16 step 8, §17 and §19 follow |

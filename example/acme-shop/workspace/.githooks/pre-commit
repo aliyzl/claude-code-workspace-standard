@@ -1,0 +1,13 @@
+#!/bin/bash
+# Refuses a commit that stages something key-shaped. Install once per clone (the setting is not copied by git clone):
+#   git config core.hooksPath .githooks
+# It runs tools/scan-secrets.sh on the staged files and prints counts, never the matching text.
+set -u
+root=$(git rev-parse --show-toplevel) || exit 1
+files=()
+while IFS= read -r -d '' f; do files+=("$root/$f"); done < <(git diff --cached --name-only --diff-filter=ACM -z)
+[ "${#files[@]}" -gt 0 ] || exit 0
+if ! "$root/tools/scan-secrets.sh" "${files[@]}"; then
+  echo "commit refused: a staged file holds something key-shaped (counts above). Remove the value, rotate the credential." >&2
+  exit 1
+fi
