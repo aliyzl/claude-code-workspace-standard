@@ -46,7 +46,7 @@ layout, and §18 has the `OWNER-PROFILE.md` template.
    nothing, and that applies to your own scans too.
 5. **Link, never copy**, anything a code repository owns.
 6. **Secrets never land in the workspace in plaintext.** Ask for access, not secrets. Scan by whole token
-   family, and print counts, never matches. Git history is permanent.
+   family, and print counts, never matches. Enforce it with a git hook and a CI job, not a sentence. Git history is permanent.
 7. **Never block on the owner.** Questions wait in a file. Decisions taken under delegation are recorded with their
    reason and their cost to reverse.
 8. **Several sessions, one checkout:** commit with `git commit --only <paths>`. Permission does not travel between
